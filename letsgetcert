@@ -93,16 +93,16 @@ function getcert {
 	[ "$VERBOSE" = true ] && echo "[$CN] subject: $SUBJECT"
 	[ "$VERBOSE" = true ] && echo "[$CN] alt_names: $ALT_NAMES"
 
-	# Generate OpenSSL config file
 	OPENSSL_CNF_TEMP=$(mktemp)
-	trap "rm -f $OPENSSL_CNF_TEMP" INT TERM HUP EXIT
+	CSR_TEMP=$(mktemp)
+	trap "rm -f $OPENSSL_CNF_TEMP $CSR_TEMP" INT TERM HUP EXIT
+
+	# Generate OpenSSL config file
 	cat /etc/ssl/openssl.cnf > $OPENSSL_CNF_TEMP
 	echo '[ alt_names ]' >> $OPENSSL_CNF_TEMP
 	echo "subjectAltName = $ALT_NAMES" >> $OPENSSL_CNF_TEMP
 
 	# Generate CSR
-	CSR_TEMP=$(mktemp)
-	trap "rm -f $CSR_TEMP" INT TERM HUP EXIT
 	# Key is owned by root
 	sudo openssl req -new -config $OPENSSL_CNF_TEMP -key $PRIVKEY -out $CSR_TEMP -outform der -subj "$SUBJECT" -reqexts alt_names
 
