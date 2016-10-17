@@ -16,13 +16,18 @@ A [Certbot](https://certbot.eff.org/) wrapper to process certificate configurati
 
 ## Usage
 ```
-letsgetcert [-c|--config CONFIGFILE] [-f|--force COMMONNAME] [-n|--no-cert] [-v|--verbose]
+letsgetcert [-c|--config CONFIGFILE] [-e|--list-expires] [-f|--force COMMONNAME] [-n|--no-cert] [-v|--verbose]
 ```
 
 ```
 -c, --c CONFIGFILE
 ```
 Read `CONFIGFILE` instead of `letsgetcert.cnf` in the `letsgetcert` directory
+
+```
+-e, --list-expires
+```
+Only list expire dates; `--force` and `--no-cert` do nothing when used together with `--list-expires`
 
 ```
 -f, --force COMMONNAME

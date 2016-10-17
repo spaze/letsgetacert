@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function usage {
-	echo "Usage `basename $0` [-c|--config CONFIGFILE] [-f|--force COMMONNAME] [-n|--no-cert] [-v|--verbose]"
+	echo "Usage `basename $0` [-c|--config CONFIGFILE] [-e|--list-expires] [-f|--force COMMONNAME] [-n|--no-cert] [-v|--verbose]"
 }
 
 function parseopts {
@@ -17,6 +17,9 @@ function parseopts {
 					exit 1
 				fi
 				shift  # past argument
+			;;
+			-e|--list-expires)
+				LIST_EXPIRES=true
 			;;
 			-f|--force)
 				FORCE="$2"
@@ -114,39 +117,56 @@ function getcert {
 	sudo ln --symbolic --force $FULLCHAIN $FULLCHAIN_LIVE
 }
 
+function getexpiry {
+	sudo openssl x509 -in $1 -noout -enddate | sed -n "s/notAfter=//p"
+}
+
+function checkexpiry {
+	GETCERT=true
+	# Certs are owned by root
+	if [ "$FORCE" != $CN ] && sudo [ -f $FULLCHAIN_LIVE ]; then
+		NOW_EPOCH=`date +%s`
+		EXPIRY_DATE=`getexpiry $FULLCHAIN_LIVE`
+		[ "$VERBOSE" = true ] && echo "[$CN] $FULLCHAIN_LIVE already exists and expires $EXPIRY_DATE"
+		if [ `expr $NOW_EPOCH + $EXPIRY_THRESHOLD \* 24 \* 60 \* 60` -ge `date --date "$EXPIRY_DATE" +%s` ]; then
+			[ "$VERBOSE" = true ] && echo "[$CN] Certificate expired or expires soon, will be renewed"
+			GETCERT=true
+		else
+			[ "$VERBOSE" = true ] && echo "[$CN] Certificate will NOT be renewed, expiration date too far"
+			GETCERT=false
+		fi
+	else
+		[ "$VERBOSE" = true ] && echo "[$CN] $FULLCHAIN_LIVE does NOT exist or --force specified"
+	fi
+	if [ "$GETCERT" = true ]; then
+		[ "$VERBOSE" = true ] && echo "[$CN] Getting certificate"
+		if [ "$NO_CERT" != true ]; then
+			getcert
+			CALLHOOK=true
+		else
+			echo "[$CN] --no-cert specified, skipping"
+		fi
+	fi
+}
+
 function processconf {
 	for CONF_FILE in `find $CONFDIR -name \*.cnf`; do
 		source $CONF_FILE
 		NOW=`date --utc +%Y%m%d%H%M%S`
 		[ "$VERBOSE" = true ] && echo "[$CN] Starting at $NOW"
-		NOW_EPOCH=`date +%s`
 		CERT=$CERT_DIR/archive/$CN-$NOW.pem
 		CHAIN=$CERT_DIR/archive/$CN-$NOW.chain.pem
 		FULLCHAIN=$CERT_DIR/archive/$CN-$NOW.fullchain.pem
 		FULLCHAIN_LIVE=$CERT_DIR/$CN.fullchain.pem
-		GETCERT=true
-		# Certs are owned by root
-		if [ "$FORCE" != $CN ] && sudo [ -f $FULLCHAIN_LIVE ]; then
-			EXPIRY_DATE=`sudo openssl x509 -in $FULLCHAIN_LIVE -noout -enddate | sed -n "s/notAfter=//p"`
-			[ "$VERBOSE" = true ] && echo "[$CN] $FULLCHAIN_LIVE already exists and expires $EXPIRY_DATE"
-			if [ `expr $NOW_EPOCH + $EXPIRY_THRESHOLD \* 24 \* 60 \* 60` -ge `date --date "$EXPIRY_DATE" +%s` ]; then
-				[ "$VERBOSE" = true ] && echo "[$CN] Certificate expired or expires soon, will be renewed"
-				GETCERT=true
+		if [ "$LIST_EXPIRES" = true ]; then
+			if sudo [ -f $FULLCHAIN_LIVE ]; then
+				echo "[$CN] `getexpiry $FULLCHAIN_LIVE`"
 			else
-				[ "$VERBOSE" = true ] && echo "[$CN] Certificate will NOT be renewed, expiration date too far"
-				GETCERT=false
+				[ "$VERBOSE" = true ] && echo "[$CN] $FULLCHAIN_LIVE does NOT exist"
+				echo "[$CN] no certificate found"
 			fi
 		else
-			[ "$VERBOSE" = true ] && echo "[$CN] $FULLCHAIN_LIVE does NOT exist or --force specified"
-		fi
-		if [ "$GETCERT" = true ]; then
-			[ "$VERBOSE" = true ] && echo "[$CN] Getting certificate"
-			if [ "$NO_CERT" != true ]; then
-				getcert
-				CALLHOOK=true
-			else
-				echo "[$CN] --no-cert specified, skipping"
-			fi
+			checkexpiry
 		fi
 	done
 }
