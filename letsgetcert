@@ -1,0 +1,164 @@
+#!/bin/bash
+
+function usage {
+	echo "Usage `basename $0` [-c|--config CONFIGFILE] [-f|--force COMMONNAME] [-n|--no-cert] [-v|--verbose]"
+}
+
+function parseopts {
+	CONF=`dirname $0`/`basename $0`.cnf
+	while [ $# -gt 0 ]; do
+		KEY="$1"
+		case $KEY in
+			-c|--config)
+				CONF="$2"
+				if [ "$CONF" = "" ]; then
+					echo "No CONFIGFILE specified for --config"
+					usage
+					exit 1
+				fi
+				shift  # past argument
+			;;
+			-f|--force)
+				FORCE="$2"
+				if [ "$FORCE" = "" ]; then
+					echo "No COMMONNAME specified for --force"
+					usage
+					exit 1
+				fi
+				shift  # past argument
+			;;
+			-v|--verbose)
+				VERBOSE=true
+			;;
+			-n|--no-cert)
+				NO_CERT=true
+			;;
+			*)
+				usage
+				exit 1
+			;;
+		esac
+		shift
+	done
+}
+
+function hook {
+	: # To be redefined in the config file
+}
+
+function loadconf {
+	if [ ! -f $CONF ]; then
+		echo "Config file $CONF not found"
+		exit 2
+	fi
+
+	source $CONF
+
+	if [ -z "$EXPIRY_THRESHOLD" ]; then
+		echo "EXPIRY_THRESHOLD not defined in $CONF"
+		exit 3
+	fi
+
+	if [ -z "$CONFDIR" ]; then
+		echo "CONFDIR not defined in $CONF"
+		exit 3
+	fi
+
+	if [ -z "$CERTBOT" ]; then
+		echo "CERTBOT not defined in $CONF"
+		exit 3
+	fi
+
+	if [ -z "$SUBJECT_EMAIL" ]; then
+		echo "SUBJECT_EMAIL not defined in $CONF"
+		exit 3
+	fi
+}
+
+function getcert {
+	# Build certbot command line and alt names for openssl
+	COMMAND=""
+	ALT_NAMES=""
+	IFS=';' read -a LINES <<<"$DOMAINS"
+	for LINE in "${LINES[@]}"; do
+		IFS='=' read -a ITEMS <<<"$LINE"
+		COMMAND="$COMMAND --webroot-path $WEBROOT_DIR/${ITEMS[0]}"
+		IFS=',' read -a DOMAINS <<<"${ITEMS[1]}"
+		for DOMAIN in "${DOMAINS[@]}"; do
+			COMMAND="$COMMAND --domain $DOMAIN"
+			ALT_NAMES="${ALT_NAMES},DNS:$DOMAIN"
+		done;
+	done
+	ALT_NAMES=${ALT_NAMES:1}
+	[ "$VERBOSE" = true ] && echo "[$CN] subject: $SUBJECT"
+	[ "$VERBOSE" = true ] && echo "[$CN] alt_names: $ALT_NAMES"
+
+	# Generate OpenSSL config file
+	OPENSSL_CNF_TEMP=$(mktemp)
+	trap "rm -f $OPENSSL_CNF_TEMP" INT TERM HUP EXIT
+	cat /etc/ssl/openssl.cnf > $OPENSSL_CNF_TEMP
+	echo '[ alt_names ]' >> $OPENSSL_CNF_TEMP
+	echo "subjectAltName = $ALT_NAMES" >> $OPENSSL_CNF_TEMP
+
+	# Generate CSR
+	CSR_TEMP=$(mktemp)
+	trap "rm -f $CSR_TEMP" INT TERM HUP EXIT
+	# Key is owned by root
+	sudo openssl req -new -config $OPENSSL_CNF_TEMP -key $PRIVKEY -out $CSR_TEMP -outform der -subj "$SUBJECT" -reqexts alt_names
+
+	# Get the certificate
+	[ "$VERBOSE" = true ] && echo "[$CN] Calling Certbot $CERTBOT with $CERTBOT_EXTRA_OPTS"
+	$CERTBOT certonly $CERTBOT_EXTRA_OPTS --csr $CSR_TEMP --cert-path $CERT --chain-path $CHAIN --fullchain-path $FULLCHAIN --webroot $COMMAND
+
+	[ "$VERBOSE" = true ] && echo "[$CN] Certificate generated $FULLCHAIN_LIVE -> $FULLCHAIN"
+	sudo ln --symbolic --force $FULLCHAIN $FULLCHAIN_LIVE
+}
+
+function processconf {
+	for CONF_FILE in `find $CONFDIR -name \*.cnf`; do
+		source $CONF_FILE
+		NOW=`date --utc +%Y%m%d%H%M%S`
+		[ "$VERBOSE" = true ] && echo "[$CN] Starting at $NOW"
+		NOW_EPOCH=`date +%s`
+		CERT=$CERT_DIR/archive/$CN-$NOW.pem
+		CHAIN=$CERT_DIR/archive/$CN-$NOW.chain.pem
+		FULLCHAIN=$CERT_DIR/archive/$CN-$NOW.fullchain.pem
+		FULLCHAIN_LIVE=$CERT_DIR/$CN.fullchain.pem
+		GETCERT=true
+		# Certs are owned by root
+		if [ "$FORCE" != $CN ] && sudo [ -f $FULLCHAIN_LIVE ]; then
+			EXPIRY_DATE=`sudo openssl x509 -in $FULLCHAIN_LIVE -noout -enddate | sed -n "s/notAfter=//p"`
+			[ "$VERBOSE" = true ] && echo "[$CN] $FULLCHAIN_LIVE already exists and expires $EXPIRY_DATE"
+			if [ `expr $NOW_EPOCH + $EXPIRY_THRESHOLD \* 24 \* 60 \* 60` -ge `date --date "$EXPIRY_DATE" +%s` ]; then
+				[ "$VERBOSE" = true ] && echo "[$CN] Certificate expired or expires soon, will be renewed"
+				GETCERT=true
+			else
+				[ "$VERBOSE" = true ] && echo "[$CN] Certificate will NOT be renewed, expiration date too far"
+				GETCERT=false
+			fi
+		else
+			[ "$VERBOSE" = true ] && echo "[$CN] $FULLCHAIN_LIVE does NOT exist or --force specified"
+		fi
+		if [ "$GETCERT" = true ]; then
+			[ "$VERBOSE" = true ] && echo "[$CN] Getting certificate"
+			if [ "$NO_CERT" != true ]; then
+				getcert
+				CALLHOOK=true
+			else
+				echo "[$CN] --no-cert specified, skipping"
+			fi
+		fi
+	done
+}
+
+function callhook {
+	if [ "$CALLHOOK" = true ]; then
+		[ "$VERBOSE" = true ] && echo "[common] Calling hook"
+		hook
+	fi
+}
+
+parseopts $@
+loadconf
+processconf
+callhook

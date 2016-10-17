@@ -1,0 +1,20 @@
+# Renew certs this many days before the expiration date
+EXPIRY_THRESHOLD=5
+
+# Where to look for the config files
+CONFDIR=/home/ubuntu/.letsgetcert
+
+# How to execute Certbot
+CERTBOT=/opt/certbot/certbot-auto
+
+# Certbot extra options
+CERTBOT_EXTRA_OPTS="--test-cert --quiet"
+
+# Email to be used in subject field
+SUBJECT_EMAIL=bot@example.com
+
+# Call this function when at least one cert was generated
+function hook {
+	echo Reload your web server configuration
+	# Example: sudo service nginx reload
+}
