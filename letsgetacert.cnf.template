@@ -2,7 +2,7 @@
 EXPIRY_THRESHOLD=5
 
 # Where to look for the config files
-CONFDIR=/home/ubuntu/.letsgetcert
+CONFDIR=/home/ubuntu/.letsgetacert
 
 # How to execute Certbot
 CERTBOT=/opt/certbot/certbot-auto

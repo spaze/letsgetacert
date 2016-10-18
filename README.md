@@ -1,4 +1,4 @@
-# Let's Get Cert
+# Let's Get a Cert
 A [Certbot](https://certbot.eff.org/) wrapper to process certificate configuration files and to generate certificates if needed. Uses pre-generated private key to generate CSR, the key is not overwritten so you can use HTTP Public Key Pinning (HPKP) with your website.
 
 # Prerequisites
@@ -7,22 +7,22 @@ A [Certbot](https://certbot.eff.org/) wrapper to process certificate configurati
 
 # Installation
 1. Clone this repository somewhere
-2. Copy `letsgetcert.cnf.template` to `letsgetcert.cnf`
-3.  Edit `letsgetcert.cnf`, see configuration options below
+2. Copy `letsgetacert.cnf.template` to `letsgetacert.cnf`
+3.  Edit `letsgetacert.cnf`, see configuration options below
 4. Create certificate configuration files for your certificates and domains
-5. Run `letsgetcert --verbose --no-cert` to see if the certificate configuration files are processed correctly
-6. Run `letsgetcert --verbose` to get your certificates if needed
-7. If everything is ok place `letsgetcert` to your crontab so that it get's executed daily; no need to run with superuser privileges, `sudo` is used when needed
+5. Run `letsgetacert --verbose --no-cert` to see if the certificate configuration files are processed correctly
+6. Run `letsgetacert --verbose` to get your certificates if needed
+7. If everything is ok place `letsgetacert` to your crontab so that it get's executed daily; no need to run with superuser privileges, `sudo` is used when needed
 
 ## Usage
 ```
-letsgetcert [-c|--config CONFIGFILE] [-e|--list-expires] [-f|--force COMMONNAME] [-n|--no-cert] [-v|--verbose]
+letsgetacert [-c|--config CONFIGFILE] [-e|--list-expires] [-f|--force COMMONNAME] [-n|--no-cert] [-v|--verbose]
 ```
 
 ```
 -c, --c CONFIGFILE
 ```
-Read `CONFIGFILE` instead of `letsgetcert.cnf` in the `letsgetcert` directory
+Read `CONFIGFILE` instead of `letsgetacert.cnf` in the `letsgetacert` directory
 
 ```
 -e, --list-expires
@@ -48,7 +48,7 @@ Be verbose and report what's going on
 ### Example file
 ```
 EXPIRY_THRESHOLD=5
-CONFDIR=/home/ubuntu/.letsgetcert
+CONFDIR=/home/ubuntu/.letsgetacert
 CERTBOT=/opt/certbot/certbot-auto
 CERTBOT_EXTRA_OPTS="--test-cert --quiet"
 SUBJECT_EMAIL=bot@example.com
@@ -64,7 +64,7 @@ EXPIRY_THRESHOLD=5
 Renew certs this many days before the expiration date
 
 ```
-CONFDIR=/home/ubuntu/.letsgetcert
+CONFDIR=/home/ubuntu/.letsgetacert
 ```
 Where to look for the certificate config files
 
@@ -133,4 +133,4 @@ DOMAINS="www=example.com,www.example.com;foo=foo.example.com;bar=bar.example.com
 Configuration of domains for the certificate, these will be placed in the Subject Alternative Name (SAN) field; the format is `DIR=DOMAINS`, Certbot will look for verification files in `$WEBROOT_DIR/DIR/.well-known` directory for `DOMAINS`; separate multiple domains with comma (`,`), multiple `DIR=DOMAINS` with semicolon (`;`)
 
 ## Seamless transition
-You can use your existing certificates and keys with `letsgetcert`, just create a symbolic link in the `CERT_DIR`. The name should follow this pattern: `$CN.fullchain.pem`. Then the file will be picked up by `letsgetcert` automatically and if the certificate is going to expire soon it will be renewed using Certbot.
+You can use your existing certificates and keys with `letsgetacert`, just create a symbolic link in the `CERT_DIR`. The name should follow this pattern: `$CN.fullchain.pem`. Then the file will be picked up by `letsgetacert` automatically and if the certificate is going to expire soon it will be renewed using Certbot.
