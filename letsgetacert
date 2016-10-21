@@ -125,7 +125,6 @@ function checkexpiry {
 	GETCERT=true
 	# Certs are owned by root
 	if [ "$FORCE" != $CN ] && sudo [ -f $FULLCHAIN_LIVE ]; then
-		NOW_EPOCH=`date +%s`
 		EXPIRY_DATE=`getexpiry $FULLCHAIN_LIVE`
 		[ "$VERBOSE" = true ] && echo "[$CN] $FULLCHAIN_LIVE already exists and expires $EXPIRY_DATE"
 		if [ `expr $NOW_EPOCH + $EXPIRY_THRESHOLD \* 24 \* 60 \* 60` -ge `date --date "$EXPIRY_DATE" +%s` ]; then
@@ -153,6 +152,7 @@ function processconf {
 	for CONF_FILE in `find $CONFDIR -name \*.cnf`; do
 		source $CONF_FILE
 		NOW=`date --utc +%Y%m%d%H%M%S`
+		NOW_EPOCH=`date +%s`
 		[ "$VERBOSE" = true ] && echo "[$CN] Starting at $NOW"
 		CERT=$CERT_DIR/archive/$CN-$NOW.pem
 		CHAIN=$CERT_DIR/archive/$CN-$NOW.chain.pem
@@ -160,7 +160,16 @@ function processconf {
 		FULLCHAIN_LIVE=$CERT_DIR/$CN.fullchain.pem
 		if [ "$LIST_EXPIRES" = true ]; then
 			if sudo [ -f $FULLCHAIN_LIVE ]; then
-				echo "[$CN] `getexpiry $FULLCHAIN_LIVE`"
+				EXPIRY_DATE=`getexpiry $FULLCHAIN_LIVE`
+				DAYS_LEFT=`expr \( $(date -d "$EXPIRY_DATE" +%s) - $NOW_EPOCH \) / 24 / 60 / 60`
+				if [ $DAYS_LEFT -le 0 ]; then
+					MESSAGE=EXPIRED
+				elif [ $DAYS_LEFT = 1 ]; then
+					MESSAGE="$DAYS_LEFT DAY"
+				else
+					MESSAGE="$DAYS_LEFT DAYS"
+				fi
+				echo "[$CN] $MESSAGE, $EXPIRY_DATE"
 			else
 				[ "$VERBOSE" = true ] && echo "[$CN] $FULLCHAIN_LIVE does NOT exist"
 				echo "[$CN] no certificate found"
