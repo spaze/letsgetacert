@@ -119,6 +119,9 @@ function getcert {
 
 	verbose "[$CN] Certificate generated $FULLCHAIN_LIVE -> $FULLCHAIN"
 	sudo ln --symbolic --force $FULLCHAIN $FULLCHAIN_LIVE
+
+	NEW_CERTS_CN+=($CN)
+	NEW_CERTS_EXPIRY+=($(date --date "$(getexpiry $FULLCHAIN_LIVE)" +%s))
 }
 
 function getexpiry {
@@ -153,6 +156,8 @@ function checkexpiry {
 }
 
 function processconf {
+	NEW_CERTS_CN=()
+	NEW_CERTS_FULLCHAIN=()
 	for CONF_FILE in `find $CONFDIR -name \*.cnf`; do
 		source $CONF_FILE
 		NOW=`date --utc +%Y%m%d%H%M%S`
