@@ -1,5 +1,9 @@
 #!/bin/bash
 
+function verbose {
+	[ "$VERBOSE" = true ] && echo $1
+}
+
 function usage {
 	echo "Usage `basename $0` [-c|--config CONFIGFILE] [-e|--list-expires] [-f|--force COMMONNAME] [-n|--no-cert] [-v|--verbose]"
 }
@@ -93,8 +97,8 @@ function getcert {
 		done;
 	done
 	ALT_NAMES=${ALT_NAMES:1}
-	[ "$VERBOSE" = true ] && echo "[$CN] subject: $SUBJECT"
-	[ "$VERBOSE" = true ] && echo "[$CN] alt_names: $ALT_NAMES"
+	verbose "[$CN] subject: $SUBJECT"
+	verbose "[$CN] alt_names: $ALT_NAMES"
 
 	OPENSSL_CNF_TEMP=$(mktemp)
 	CSR_TEMP=$(mktemp)
@@ -110,10 +114,10 @@ function getcert {
 	sudo openssl req -new -config $OPENSSL_CNF_TEMP -key $PRIVKEY -out $CSR_TEMP -outform der -subj "$SUBJECT" -reqexts alt_names
 
 	# Get the certificate
-	[ "$VERBOSE" = true ] && echo "[$CN] Calling Certbot $CERTBOT with $CERTBOT_EXTRA_OPTS"
+	verbose "[$CN] Calling Certbot $CERTBOT with $CERTBOT_EXTRA_OPTS"
 	$CERTBOT certonly $CERTBOT_EXTRA_OPTS --csr $CSR_TEMP --cert-path $CERT --chain-path $CHAIN --fullchain-path $FULLCHAIN --webroot $COMMAND
 
-	[ "$VERBOSE" = true ] && echo "[$CN] Certificate generated $FULLCHAIN_LIVE -> $FULLCHAIN"
+	verbose "[$CN] Certificate generated $FULLCHAIN_LIVE -> $FULLCHAIN"
 	sudo ln --symbolic --force $FULLCHAIN $FULLCHAIN_LIVE
 }
 
@@ -126,24 +130,24 @@ function checkexpiry {
 	# Certs are owned by root
 	if [ "$FORCE" != $CN ] && sudo [ -f $FULLCHAIN_LIVE ]; then
 		EXPIRY_DATE=`getexpiry $FULLCHAIN_LIVE`
-		[ "$VERBOSE" = true ] && echo "[$CN] $FULLCHAIN_LIVE already exists and expires $EXPIRY_DATE"
+		verbose "[$CN] $FULLCHAIN_LIVE already exists and expires $EXPIRY_DATE"
 		if [ `expr $NOW_EPOCH + $EXPIRY_THRESHOLD \* 24 \* 60 \* 60` -ge `date --date "$EXPIRY_DATE" +%s` ]; then
-			[ "$VERBOSE" = true ] && echo "[$CN] Certificate expired or expires soon, will be renewed"
+			verbose "[$CN] Certificate expired or expires soon, will be renewed"
 			GETCERT=true
 		else
-			[ "$VERBOSE" = true ] && echo "[$CN] Certificate will NOT be renewed, expiration date too far"
+			verbose "[$CN] Certificate will NOT be renewed, expiration date too far"
 			GETCERT=false
 		fi
 	else
-		[ "$VERBOSE" = true ] && echo "[$CN] $FULLCHAIN_LIVE does NOT exist or --force specified"
+		verbose "[$CN] $FULLCHAIN_LIVE does NOT exist or --force specified"
 	fi
 	if [ "$GETCERT" = true ]; then
-		[ "$VERBOSE" = true ] && echo "[$CN] Getting certificate"
+		verbose "[$CN] Getting certificate"
 		if [ "$NO_CERT" != true ]; then
 			getcert
 			CALLHOOK=true
 		else
-			echo "[$CN] --no-cert specified, skipping"
+			verbose "[$CN] --no-cert specified, skipping"
 		fi
 	fi
 }
@@ -153,7 +157,7 @@ function processconf {
 		source $CONF_FILE
 		NOW=`date --utc +%Y%m%d%H%M%S`
 		NOW_EPOCH=`date +%s`
-		[ "$VERBOSE" = true ] && echo "[$CN] Starting at $NOW"
+		verbose "[$CN] Starting at $NOW"
 		CERT=$CERT_DIR/archive/$CN-$NOW.pem
 		CHAIN=$CERT_DIR/archive/$CN-$NOW.chain.pem
 		FULLCHAIN=$CERT_DIR/archive/$CN-$NOW.fullchain.pem
@@ -171,7 +175,7 @@ function processconf {
 				fi
 				echo "[$CN] $MESSAGE, $EXPIRY_DATE"
 			else
-				[ "$VERBOSE" = true ] && echo "[$CN] $FULLCHAIN_LIVE does NOT exist"
+				verbose "[$CN] $FULLCHAIN_LIVE does NOT exist"
 				echo "[$CN] no certificate found"
 			fi
 		else
@@ -182,7 +186,7 @@ function processconf {
 
 function callhook {
 	if [ "$CALLHOOK" = true ]; then
-		[ "$VERBOSE" = true ] && echo "[common] Calling hook"
+		verbose "[common] Calling hook"
 		hook
 	fi
 }
