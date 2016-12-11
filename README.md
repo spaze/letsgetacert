@@ -102,6 +102,7 @@ CERT_DIR=/etc/nginx/certs
 SUBJECT="/C=CZ/ST=Prague/L=Prague/O=example.com/emailAddress=$SUBJECT_EMAIL/CN=$CN"
 WEBROOT_DIR=/srv/www/$CN/site/public
 DOMAINS="www=example.com,www.example.com;foo=foo.example.com;bar=bar.example.com"
+EXT=ecdsa
 ```
 
 ### Options
@@ -134,6 +135,11 @@ Path to where the web root directories are placed
 DOMAINS="www=example.com,www.example.com;foo=foo.example.com;bar=bar.example.com"
 ```
 Configuration of domains for the certificate, these will be placed in the Subject Alternative Name (SAN) field; the format is `DIR=DOMAINS`, Certbot will look for verification files in `$WEBROOT_DIR/DIR/.well-known` directory for `DOMAINS`; separate multiple domains with comma (`,`), multiple `DIR=DOMAINS` with semicolon (`;`)
+
+```
+EXT=ecdsa
+```
+Optional *filename extension* displayed in verbose messages, can be used when there are multiple certs for the same domain (e.g. dual RSA and ECDSA certs)
 
 ## Seamless transition
 You can use your existing certificates and keys with `letsgetacert`, just create a symbolic link in the `CERT_DIR`. The name should follow this pattern: `$CN.fullchain.pem`. Then the file will be picked up by `letsgetacert` automatically and if the certificate is going to expire soon it will be renewed using Certbot.
