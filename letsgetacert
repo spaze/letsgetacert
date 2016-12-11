@@ -158,7 +158,7 @@ function checkexpiry {
 function processconf {
 	NEW_CERTS_CN=()
 	NEW_CERTS_FULLCHAIN=()
-	for CONF_FILE in `find $CONFDIR -name \*.cnf`; do
+	for CONF_FILE in `find $CONFDIR -name \*.cnf | sort`; do
 		EXT=""
 		source $CONF_FILE
 		if [ "$EXT" != "" ]; then
