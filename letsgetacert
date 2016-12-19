@@ -117,11 +117,16 @@ function getcert {
 	verbose "[$CN$EXT] Calling Certbot $CERTBOT with $CERTBOT_EXTRA_OPTS"
 	$CERTBOT certonly $CERTBOT_EXTRA_OPTS --csr $CSR_TEMP --cert-path $CERT --chain-path $CHAIN --fullchain-path $FULLCHAIN --webroot $COMMAND
 
-	verbose "[$CN$EXT] Certificate generated $FULLCHAIN_LIVE -> $FULLCHAIN"
-	sudo ln --symbolic --force $FULLCHAIN $FULLCHAIN_LIVE
+	if sudo [ -f $FULLCHAIN ]; then
+		verbose "[$CN$EXT] Certificate generated $FULLCHAIN_LIVE -> $FULLCHAIN"
+		sudo ln --symbolic --force $FULLCHAIN $FULLCHAIN_LIVE
 
-	NEW_CERTS_CN+=($CN)
-	NEW_CERTS_EXPIRY+=($(date --date "$(getexpiry $FULLCHAIN_LIVE)" +%s))
+		NEW_CERTS_CN+=($CN)
+		NEW_CERTS_EXPIRY+=($(date --date "$(getexpiry $FULLCHAIN_LIVE)" +%s))
+	else
+		verbose "[$CN$EXT] Certificate NOT generated $FULLCHAIN"
+		FAILED_CERTS_CN+=($CN)
+	fi
 }
 
 function getexpiry {
@@ -158,6 +163,7 @@ function checkexpiry {
 function processconf {
 	NEW_CERTS_CN=()
 	NEW_CERTS_FULLCHAIN=()
+	FAILED_CERTS_CN=()
 	for CONF_FILE in `find $CONFDIR -name \*.cnf | sort`; do
 		EXT=""
 		source $CONF_FILE
