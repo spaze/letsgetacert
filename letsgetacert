@@ -167,6 +167,12 @@ function processconf {
 		NOW=`date --utc +%Y%m%d%H%M%S`
 		NOW_EPOCH=`date +%s`
 		verbose "[$CN$EXT] Starting at $NOW"
+
+		if sudo [ ! -d $CERT_DIR/archive ]; then
+			verbose "[$CN$EXT] Creating directory $CERT_DIR/archive"
+			sudo mkdir -p $CERT_DIR/archive
+		fi
+
 		CERT=$CERT_DIR/archive/$CN-$NOW.cert$EXT.pem
 		CHAIN=$CERT_DIR/archive/$CN-$NOW.chain$EXT.pem
 		FULLCHAIN=$CERT_DIR/archive/$CN-$NOW.fullchain$EXT.pem
