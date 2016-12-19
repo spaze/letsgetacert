@@ -2,7 +2,7 @@
 A [Certbot](https://certbot.eff.org/) wrapper to process certificate configuration files and to generate certificates if needed. Uses pre-generated private key to generate CSR, the key is not overwritten so you can use HTTP Public Key Pinning (HPKP) with your website.
 
 # Prerequisites
-1. [Certbot](https://certbot.eff.org/) installed
+1. [Certbot](https://certbot.eff.org/) installed and registered with the CA (`certbot-auto register`)
 2. A webserver with HTTPS support enabled, make sure `.well-known` directory in the document root is accessible and the URLs are not rewritten
 
 # Installation
