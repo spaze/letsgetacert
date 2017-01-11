@@ -122,6 +122,7 @@ function getcert {
 		sudo ln --symbolic --force $FULLCHAIN $FULLCHAIN_LIVE
 
 		NEW_CERTS_CN+=($CN$EXT)
+		NEW_CERTS_START+=($(date --date "$(getstart $FULLCHAIN_LIVE)" +%s))
 		NEW_CERTS_EXPIRY+=($(date --date "$(getexpiry $FULLCHAIN_LIVE)" +%s))
 	else
 		verbose "[$CN$EXT] Certificate NOT generated $FULLCHAIN"
@@ -131,6 +132,10 @@ function getcert {
 
 function getexpiry {
 	sudo openssl x509 -in $1 -noout -enddate | sed -n "s/notAfter=//p"
+}
+
+function getstart {
+	sudo openssl x509 -in $1 -noout -startdate | sed -n "s/notBefore=//p"
 }
 
 function checkexpiry {

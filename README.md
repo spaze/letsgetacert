@@ -91,6 +91,7 @@ function hook {
 Call this function when at least one cert was generated successfully or not; use it to reload your web server configuration; you can also use these variables in the hook function:
 
 - `$NEW_CERTS_CN`: array of common names (plus *filename extensions*) from generated certificates
+- `$NEW_CERTS_START`: array of start dates of the newly generated certificates, in seconds since the epoch
 - `$NEW_CERTS_EXPIRY`: array of expiration dates of the newly generated certificates, in seconds since the epoch
 - `$FAILED_CERTS_CN`: array of common names (plus *filename extensions*) from certificates which were not generated due to a failure
 
