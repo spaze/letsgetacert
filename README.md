@@ -95,6 +95,28 @@ Call this function when at least one cert was generated successfully or not; use
 - `$NEW_CERTS_EXPIRY`: array of expiration dates of the newly generated certificates, in seconds since the epoch
 - `$FAILED_CERTS_CNEXT`: array of common names (plus *filename extensions*) from certificates which were not generated due to a failure
 
+#### Hook example
+This (bit more complicated) hook example will reload nginx configuration when at least one certificate was generated successfully, and `POST` a report together with a `user` and a `key` to the specified URL:
+```
+function hook {
+        sudo service nginx reload
+        PARAMS="--data user=foo --data key=bar"
+        for I in "${!NEW_CERTS_CNEXT[@]}"; do
+                PARAMS="${PARAMS} --data certs[${NEW_CERTS_CNEXT[$I]}][start]=${NEW_CERTS_START[$I]} --data certs[${NEW_CERTS_CNEXT[$I]}][expiry]=${NEW_CERTS_EXPIRY[$I]}"
+        done
+        for I in "${!FAILED_CERTS_CNEXT[@]}"; do
+                PARAMS="${PARAMS} --data failure[]=${FAILED_CERTS_CNEXT[$I]}"
+        done
+        curl \
+        --location \
+        --silent \
+        --user-agent "Let's Get a Cert" \
+        --write-out "\n%{url_effective} -> HTTP %{http_code} (in %{time_total}s)\n" \
+        $PARAMS \
+        https://example.com/report-certificate
+}
+```
+
 ## Example certificate configuration file
 Name the file after the `CN` field, use `.cnf` extension when saving and place the file in the `$CONFDIR` directory, in this case the filename should be `example.com.cnf`
 ```
