@@ -91,9 +91,13 @@ function hook {
 Call this function when at least one cert was generated successfully or not; use it to reload your web server configuration; you can also use these variables in the hook function:
 
 - `$NEW_CERTS_CNEXT`: array of common names (plus *filename extensions*) from generated certificates
+- `$NEW_CERTS_CN`: array of just the common names
+- `$NEW_CERTS_EXT`: array of just the *file extensions*
 - `$NEW_CERTS_START`: array of start dates of the newly generated certificates, in seconds since the epoch
 - `$NEW_CERTS_EXPIRY`: array of expiration dates of the newly generated certificates, in seconds since the epoch
 - `$FAILED_CERTS_CNEXT`: array of common names (plus *filename extensions*) from certificates which were not generated due to a failure
+- `$FAILED_CERTS_CN`: array of just the common names
+- `$FAILED_CERTS_EXT`: array of just the *file extensions*
 
 #### Hook example
 This (bit more complicated) hook example will reload nginx configuration when at least one certificate was generated successfully, and `POST` a report together with a `user` and a `key` to the specified URL:
@@ -102,10 +106,10 @@ function hook {
         sudo service nginx reload
         PARAMS="--data user=foo --data key=bar"
         for I in "${!NEW_CERTS_CNEXT[@]}"; do
-                PARAMS="${PARAMS} --data certs[${NEW_CERTS_CNEXT[$I]}][start]=${NEW_CERTS_START[$I]} --data certs[${NEW_CERTS_CNEXT[$I]}][expiry]=${NEW_CERTS_EXPIRY[$I]}"
+                PARAMS="${PARAMS} --data certs[${NEW_CERTS_CNEXT[$I]}][cn]=${NEW_CERTS_CN[$I]} --data certs[${NEW_CERTS_CNEXT[$I]}][ext]=${NEW_CERTS_EXT[$I]} --data certs[${NEW_CERTS_CNEXT[$I]}][start]=${NEW_CERTS_START[$I]} --data certs[${NEW_CERTS_CNEXT[$I]}][expiry]=${NEW_CERTS_EXPIRY[$I]}"
         done
         for I in "${!FAILED_CERTS_CNEXT[@]}"; do
-                PARAMS="${PARAMS} --data failure[]=${FAILED_CERTS_CNEXT[$I]}"
+                PARAMS="${PARAMS} --data failure[${FAILED_CERTS_CNEXT[$I]}][cn]=${FAILED_CERTS_CN[$I]} --data failure[${FAILED_CERTS_CNEXT[$I]}][ext]=${FAILED_CERTS_EXT[$I]}"
         done
         curl \
         --location \
