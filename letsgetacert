@@ -121,14 +121,14 @@ function getcert {
 		verbose "[$CN$EXT] Certificate generated $FULLCHAIN_LIVE -> $FULLCHAIN"
 		sudo ln --symbolic --force $FULLCHAIN $FULLCHAIN_LIVE
 
-		NEW_CERTS_CNEXT+=($CN$EXT)
+		NEW_CERTS_CNEXT+=("$CN$EXT")
 		NEW_CERTS_CN+=("$CN")
 		NEW_CERTS_EXT+=("$RAW_EXT")
-		NEW_CERTS_START+=($(date --date "$(getstart $FULLCHAIN_LIVE)" +%s))
-		NEW_CERTS_EXPIRY+=($(date --date "$(getexpiry $FULLCHAIN_LIVE)" +%s))
+		NEW_CERTS_START+=("$(date --date "$(getstart $FULLCHAIN_LIVE)" +%s)")
+		NEW_CERTS_EXPIRY+=("$(date --date "$(getexpiry $FULLCHAIN_LIVE)" +%s)")
 	else
 		verbose "[$CN$EXT] Certificate NOT generated $FULLCHAIN"
-		FAILED_CERTS_CNEXT+=($CN$EXT)
+		FAILED_CERTS_CNEXT+=("$CN$EXT")
 		FAILED_CERTS_CN+=("$CN")
 		FAILED_CERTS_EXT+=("$RAW_EXT")
 	fi
