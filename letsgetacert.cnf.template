@@ -1,5 +1,5 @@
 # Renew certs this many days before the expiration date
-EXPIRY_THRESHOLD=5
+EXPIRY_THRESHOLD=21
 
 # Where to look for the config files
 CONFDIR=/home/ubuntu/.letsgetacert
