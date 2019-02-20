@@ -10,6 +10,8 @@ CERTBOT=/opt/certbot/certbot-auto
 # Certbot extra options
 CERTBOT_EXTRA_OPTS="--test-cert --quiet"
 
+CERTBOT_DNS_CHALLENGE_OPTS=""
+
 # Email to be used in subject field
 SUBJECT_EMAIL=bot@example.com
 
