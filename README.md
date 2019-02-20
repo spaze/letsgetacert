@@ -51,6 +51,7 @@ EXPIRY_THRESHOLD=5
 CONFDIR=/home/ubuntu/.letsgetacert
 CERTBOT=/opt/certbot/certbot-auto
 CERTBOT_EXTRA_OPTS="--test-cert --quiet"
+CERTBOT_DNS_CHALLENGE_OPTS=""
 SUBJECT_EMAIL=bot@example.com
 function hook {
     sudo service nginx reload
@@ -77,6 +78,11 @@ How to execute Certbot
 CERTBOT_EXTRA_OPTS="--test-cert --quiet"
 ```
 Certbot extra options, `--test-cert` is for generating invalid, testing certificates
+
+```
+CERTBOT_DNS_CHALLENGE_OPTS="--dns-cloudflare --dns-cloudflare-credentials ~/.secrets/cloudflare.ini"
+```
+Certbot challenge options, `--dns-cloudflare` telling certbot to use cloudflare plugin, required for `dns-01`
 
 ```
 SUBJECT_EMAIL=bot@example.com
@@ -131,6 +137,7 @@ SUBJECT="/C=CZ/ST=Prague/L=Prague/O=example.com/emailAddress=$SUBJECT_EMAIL/CN=$
 WEBROOT_DIR=/srv/www/$CN/site/public
 DOMAINS="www=example.com,www.example.com;foo=foo.example.com;bar=bar.example.com"
 EXT=ecdsa
+CHALLENGE="http-01"
 ```
 
 ### Options
@@ -168,6 +175,11 @@ Configuration of domains for the certificate, these will be placed in the Subjec
 EXT=ecdsa
 ```
 Optional *filename extension* displayed in verbose messages, can be used when there are multiple certs for the same domain (e.g. dual RSA and ECDSA certs)
+
+```
+CHALLENGE="dns-01"
+```
+Optional [challenge type](https://certbot.eff.org/docs/challenges.html) (`http-01` and `dns-01` are supported, `http-01` is used when no `CHALLENGE` is specified)
 
 ## Seamless transition
 You can use your existing certificates and keys with `letsgetacert`, just create a symbolic link in the `CERT_DIR`. The name should follow this pattern: `$CN.fullchain.pem`. Then the file will be picked up by `letsgetacert` automatically and if the certificate is going to expire soon it will be renewed using Certbot.

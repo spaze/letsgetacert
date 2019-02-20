@@ -86,10 +86,21 @@ function getcert {
 	# Build certbot command line and alt names for openssl
 	COMMAND=""
 	ALT_NAMES=""
+
+	if [ $CHALLENGE = "http-01" ]; then
+		COMMAND="$COMMAND --webroot"
+	elif [ $CHALLENGE = "dns-01" ]; then
+		COMMAND="$COMMAND ${CERTBOT_DNS_CHALLENGE_OPTS}"
+	fi
+
 	IFS=';' read -a LINES <<<"$DOMAINS"
 	for LINE in "${LINES[@]}"; do
 		IFS='=' read -a ITEMS <<<"$LINE"
-		COMMAND="$COMMAND --webroot-path $WEBROOT_DIR/${ITEMS[0]}"
+
+		if [ $CHALLENGE = "http-01" ]; then
+			COMMAND="$COMMAND --webroot-path $WEBROOT_DIR/${ITEMS[0]}"
+		fi
+
 		IFS=',' read -a DOMAINS <<<"${ITEMS[1]}"
 		for DOMAIN in "${DOMAINS[@]}"; do
 			COMMAND="$COMMAND --domain $DOMAIN"
@@ -115,7 +126,7 @@ function getcert {
 
 	# Get the certificate
 	verbose "[$CN$EXT] Calling Certbot $CERTBOT with $CERTBOT_EXTRA_OPTS"
-	$CERTBOT certonly $CERTBOT_EXTRA_OPTS --csr $CSR_TEMP --cert-path $CERT --chain-path $CHAIN --fullchain-path $FULLCHAIN --webroot $COMMAND
+	$CERTBOT certonly $CERTBOT_EXTRA_OPTS --csr $CSR_TEMP --cert-path $CERT --chain-path $CHAIN --fullchain-path $FULLCHAIN $COMMAND
 
 	if sudo [ -f $FULLCHAIN ]; then
 		verbose "[$CN$EXT] Certificate generated $FULLCHAIN_LIVE -> $FULLCHAIN"
@@ -182,6 +193,7 @@ function processconf {
 	for CONF_FILE in `find $CONFDIR -name \*.cnf | sort`; do
 		EXT=""
 		RAW_EXT=""
+		CHALLENGE="http-01"
 		source $CONF_FILE
 		if [ "$EXT" != "" ]; then
 			RAW_EXT=$EXT
