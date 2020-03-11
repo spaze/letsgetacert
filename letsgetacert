@@ -120,6 +120,15 @@ function getcert {
 	echo '[ alt_names ]' >> $OPENSSL_CNF_TEMP
 	echo "subjectAltName = $ALT_NAMES" >> $OPENSSL_CNF_TEMP
 
+	# Generate key, possibly
+	if [ -n "$PRIVKEY_CMD" ]; then
+		PRIVKEY=$CERT_DIR/archive/$CN-$NOW.privkey$EXT.pem
+		PRIVKEY_LIVE=$CERT_DIR/$CN.privkey$EXT.pem
+		printf -v PRIVKEY_CMD "$PRIVKEY_CMD" $PRIVKEY
+		verbose "[$CN$EXT] Generating key: $PRIVKEY_CMD"
+		sudo openssl $PRIVKEY_CMD
+	fi
+
 	# Generate CSR
 	# Key is owned by root
 	sudo openssl req -new -config $OPENSSL_CNF_TEMP -key $PRIVKEY -out $CSR_TEMP -outform der -subj "$SUBJECT" -reqexts alt_names
@@ -131,6 +140,10 @@ function getcert {
 	if sudo [ -f $FULLCHAIN ]; then
 		verbose "[$CN$EXT] Certificate generated $FULLCHAIN_LIVE -> $FULLCHAIN"
 		sudo ln --symbolic --force $FULLCHAIN $FULLCHAIN_LIVE
+		if [ -n "$PRIVKEY_LIVE" ]; then
+			verbose "[$CN$EXT] Key generated $PRIVKEY_LIVE -> $PRIVKEY"
+			sudo ln --symbolic --force $PRIVKEY $PRIVKEY_LIVE
+		fi
 
 		NEW_CERTS_CNEXT+=("$CN$EXT")
 		NEW_CERTS_CN+=("$CN")
@@ -194,7 +207,12 @@ function processconf {
 		EXT=""
 		RAW_EXT=""
 		CHALLENGE="http-01"
+		unset PRIVKEY PRIVKEY_CMD
 		source $CONF_FILE
+		if [ -n "$PRIVKEY" ] && [ -n "$PRIVKEY_CMD" ]; then
+			echo "Cannot use both PRIVKEY and PRIVKEY_CMD in $CONF_FILE"
+			exit 2
+		fi
 		if [ "$EXT" != "" ]; then
 			RAW_EXT=$EXT
 			EXT="-$EXT"

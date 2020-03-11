@@ -131,7 +131,8 @@ function hook {
 Name the file after the `CN` field, use `.cnf` extension when saving and place the file in the `$CONFDIR` directory, in this case the filename should be `example.com.cnf`
 ```
 CN=example.com
-PRIVKEY=/etc/nginx/certs/$CN.privkey.pem
+# PRIVKEY=/etc/nginx/certs/$CN.privkey.pem
+PRIVKEY_CMD="genrsa -out %s 2048"
 CERT_DIR=/etc/nginx/certs
 SUBJECT="/C=CZ/ST=Prague/L=Prague/O=example.com/emailAddress=$SUBJECT_EMAIL/CN=$CN"
 WEBROOT_DIR=/srv/www/$CN/site/public
@@ -149,12 +150,17 @@ Certificate common name
 ```
 PRIVKEY=/etc/nginx/certs/$CN.privkey.pem
 ```
-Path to private key, must exist before generating certs, will not be overwritten
+Path to private key, must exist before generating certs. Cannot be used together with `PRIVKEY_CMD`.
+
+```
+PRIVKEY_CMD="genrsa -out %s 2048"
+```
+A command to generate the private key, will be prefixed with `sudo openssl`, `%s` is a placeholder for the file where the key will be stored and is replaced automatically. Use for example `PRIVKEY_CMD="ecparam -genkey -name prime256v1 -out %s"` to generate an elliptic curve private key. The command will be executed every time before getting a new cert. Cannot be used together with `PRIVKEY`.
 
 ```
 CERT_DIR=/etc/nginx/certs
 ```
-Where to put generated certs, must contain `archive` subdirectory; files are put into the `archive` directory, `$CERT_DIR` will contain symbolic links
+Where to put generated certs and private keys, must contain `archive` subdirectory; files are put into the `archive` directory, `$CERT_DIR` will contain symbolic links
 
 ```
 SUBJECT="/C=CZ/ST=Prague/L=Prague/O=example.com/emailAddress=$SUBJECT_EMAIL/CN=$CN"
