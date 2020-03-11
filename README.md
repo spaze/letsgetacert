@@ -132,6 +132,7 @@ Name the file after the `CN` field, use `.cnf` extension when saving and place t
 ```
 CN=example.com
 PRIVKEY=/etc/nginx/certs/$CN.privkey.pem
+PRIVKEY_CMD=genrsa -out $PRIVKEY 2048
 CERT_DIR=/etc/nginx/certs
 SUBJECT="/C=CZ/ST=Prague/L=Prague/O=example.com/emailAddress=$SUBJECT_EMAIL/CN=$CN"
 WEBROOT_DIR=/srv/www/$CN/site/public
@@ -150,6 +151,11 @@ Certificate common name
 PRIVKEY=/etc/nginx/certs/$CN.privkey.pem
 ```
 Path to private key, must exist before generating certs, will not be overwritten
+
+```
+PRIVKEY_CMD="genrsa -out $PRIVKEY 2048"
+```
+An optional command to generate the private key, will be prefixed with `sudo openssl`, use for example `PRIVKEY_CMD="ecparam -genkey -name secp256r1 -out $PRIVKEY"` to generate an elliptic curve private key
 
 ```
 CERT_DIR=/etc/nginx/certs

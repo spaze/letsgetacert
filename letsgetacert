@@ -120,6 +120,11 @@ function getcert {
 	echo '[ alt_names ]' >> $OPENSSL_CNF_TEMP
 	echo "subjectAltName = $ALT_NAMES" >> $OPENSSL_CNF_TEMP
 
+	# Generate key, possibly
+	if [ -n "$PRIVKEY_CMD" ]; then
+		sudo openssl $PRIVKEY_CMD
+	fi
+
 	# Generate CSR
 	# Key is owned by root
 	sudo openssl req -new -config $OPENSSL_CNF_TEMP -key $PRIVKEY -out $CSR_TEMP -outform der -subj "$SUBJECT" -reqexts alt_names
