@@ -22,27 +22,27 @@ letsgetacert [-c|--config CONFIGFILE] [-e|--list-expires] [-f|--force COMMONNAME
 ```
 -c, --c CONFIGFILE
 ```
-Read `CONFIGFILE` instead of `letsgetacert.cnf` in the `letsgetacert` directory
+Read `CONFIGFILE` instead of `letsgetacert.cnf` in the `letsgetacert` directory.
 
 ```
 -e, --list-expires
 ```
-Only list expire dates; `--force` and `--no-cert` do nothing when used together with `--list-expires`
+Only list expire dates; `--force` and `--no-cert` do nothing when used together with `--list-expires`.
 
 ```
 -f, --force COMMONNAME
 ```
-Get certificate for `COMMONNAME` even if it's not expired yet, for example when you want to add a new SAN (Subject Alternative Name)
+Get certificate for `COMMONNAME` even if it's not expired yet, for example when you want to add a new SAN (Subject Alternative Name).
 
 ```
 -n, --no-cert
 ```
-Don't generate a CSR, don't get a certificate, like a *dry run* for testing
+Don't generate a CSR, don't get a certificate, like a *dry run* for testing.
 
 ```
 -v, --verbose
 ```
-Be verbose and report what's going on
+Be verbose and report what's going on.
 
 ## Configuration file options
 ### Example file
@@ -62,32 +62,32 @@ function hook {
 ```
 EXPIRY_THRESHOLD=5
 ```
-Renew certs this many days before the expiration date
+Renew certs this many days before the expiration date.
 
 ```
 CONFDIR=/home/ubuntu/.letsgetacert
 ```
-Where to look for the certificate config files
+Where to look for the certificate config files.
 
 ```
 CERTBOT=/opt/certbot/certbot-auto
 ```
-How to execute Certbot
+How to execute Certbot.
 
 ```
 CERTBOT_EXTRA_OPTS="--test-cert --quiet"
 ```
-Certbot extra options, `--test-cert` is for generating invalid, testing certificates
+Certbot extra options, `--test-cert` is for generating invalid, testing certificates.
 
 ```
 CERTBOT_DNS_CHALLENGE_OPTS="--dns-cloudflare --dns-cloudflare-credentials ~/.secrets/cloudflare.ini"
 ```
-Certbot challenge options, `--dns-cloudflare` telling certbot to use cloudflare plugin, required for `dns-01`
+Certbot challenge options, `--dns-cloudflare` telling certbot to use cloudflare plugin, required for `dns-01`.
 
 ```
 SUBJECT_EMAIL=bot@example.com
 ```
-Email to be used in certificate subject field
+Email to be used in certificate subject field.
 
 ```
 function hook {
@@ -128,7 +128,7 @@ function hook {
 ```
 
 ## Example certificate configuration file
-Name the file after the `CN` field, use `.cnf` extension when saving and place the file in the `$CONFDIR` directory, in this case the filename should be `example.com.cnf`
+Name the file after the `CN` field, use `.cnf` extension when saving and place the file in the `CONFDIR` directory (or create a symlink), in this case the filename should be `example.com.cnf`:
 ```
 CN=example.com
 # PRIVKEY=/etc/nginx/certs/$CN.privkey.pem
@@ -145,7 +145,7 @@ CHALLENGE="http-01"
 ```
 CN=example.com
 ```
-Certificate common name
+Certificate common name.
 
 ```
 PRIVKEY=/etc/nginx/certs/$CN.privkey.pem
@@ -160,32 +160,32 @@ A command to generate the private key, will be prefixed with `sudo openssl`, `%s
 ```
 CERT_DIR=/etc/nginx/certs
 ```
-Where to put generated certs and private keys, must contain `archive` subdirectory; files are put into the `archive` directory, `$CERT_DIR` will contain symbolic links
+Where to put generated certs and private keys, must contain `archive` subdirectory; files are put into the `archive` directory, `CERT_DIR` will contain symbolic links.
 
 ```
 SUBJECT="/C=CZ/ST=Prague/L=Prague/O=example.com/emailAddress=$SUBJECT_EMAIL/CN=$CN"
 ```
-Certificate subject; you can use `$SUBJECT_EMAIL` and `$CN` variables
+Certificate subject; you can use `$SUBJECT_EMAIL` and `$CN` variables.
 
 ```
 WEBROOT_DIR=/srv/www/$CN/site/public
 ```
-Path to where the web root directories are placed
+Path to where the web root directories are placed.
 
 ```
 DOMAINS="www=example.com,www.example.com;foo=foo.example.com;bar=bar.example.com"
 ```
-Configuration of domains for the certificate, these will be placed in the Subject Alternative Name (SAN) field; the format is `DIR=DOMAINS`, Certbot will look for verification files in `$WEBROOT_DIR/DIR/.well-known` directory for `DOMAINS`; separate multiple domains with comma (`,`), multiple `DIR=DOMAINS` with semicolon (`;`)
+Configuration of domains for the certificate, these will be placed in the Subject Alternative Name (SAN) field; the format is `DIR=DOMAINS`, Certbot will look for verification files in `WEBROOT_DIR/DIR/.well-known` directory for `DOMAINS`; separate multiple domains with comma (`,`), multiple `DIR=DOMAINS` with semicolon (`;`).
 
 ```
 EXT=ecdsa
 ```
-Optional *filename extension* displayed in verbose messages, can be used when there are multiple certs for the same domain (e.g. dual RSA and ECDSA certs)
+Optional *filename extension* displayed in verbose messages, can be used when there are multiple certs for the same domain (e.g. dual RSA and ECDSA certs).
 
 ```
 CHALLENGE="dns-01"
 ```
-Optional [challenge type](https://certbot.eff.org/docs/challenges.html) (`http-01` and `dns-01` are supported, `http-01` is used when no `CHALLENGE` is specified)
+Optional [challenge type](https://certbot.eff.org/docs/challenges.html) (`http-01` and `dns-01` are supported, `http-01` is used when no `CHALLENGE` is specified).
 
 ## Seamless transition
 You can use your existing certificates and keys with `letsgetacert`, just create a symbolic link in the `CERT_DIR`. The name should follow this pattern: `$CN.fullchain.pem`. Then the file will be picked up by `letsgetacert` automatically and if the certificate is going to expire soon it will be renewed using Certbot.
