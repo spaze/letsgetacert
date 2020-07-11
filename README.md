@@ -51,7 +51,6 @@ EXPIRY_THRESHOLD=5
 CONFDIR=/home/ubuntu/.letsgetacert
 CERTBOT=/opt/certbot/certbot-auto
 CERTBOT_EXTRA_OPTS="--test-cert --quiet"
-CERTBOT_DNS_CHALLENGE_OPTS=""
 SUBJECT_EMAIL=bot@example.com
 function hook {
     sudo service nginx reload
@@ -78,11 +77,6 @@ How to execute Certbot.
 CERTBOT_EXTRA_OPTS="--test-cert --quiet"
 ```
 Certbot extra options, `--test-cert` is for generating invalid, testing certificates.
-
-```
-CERTBOT_DNS_CHALLENGE_OPTS="--dns-cloudflare --dns-cloudflare-credentials ~/.secrets/cloudflare.ini"
-```
-Certbot challenge options, `--dns-cloudflare` telling certbot to use cloudflare plugin, required for `dns-01`.
 
 ```
 SUBJECT_EMAIL=bot@example.com
@@ -139,6 +133,7 @@ WEBROOT_DIR=/srv/www/$CN/site/public
 DOMAINS="www=example.com,www.example.com;foo=foo.example.com;bar=bar.example.com"
 EXT=ecdsa
 CHALLENGE="http-01"
+CERTBOT_DNS_CHALLENGE_OPTS=""
 ```
 
 ### Options
@@ -186,6 +181,11 @@ Optional *filename extension* displayed in verbose messages, can be used when th
 CHALLENGE="dns-01"
 ```
 Optional [challenge type](https://certbot.eff.org/docs/challenges.html) (`http-01` and `dns-01` are supported, `http-01` is used when no `CHALLENGE` is specified).
+
+```
+CERTBOT_DNS_CHALLENGE_OPTS="--dns-cloudflare --dns-cloudflare-credentials ~/.secrets/cloudflare.ini"
+```
+Certbot challenge options, `--dns-cloudflare` telling certbot to use cloudflare plugin, required for `dns-01`. Since Certbot 1.6.0, you can and should use Cloudflare's limited-scope API Tokens, not the Global API key, read the [Cloudflare DNS plugin docs](https://certbot-dns-cloudflare.readthedocs.io/en/stable/) for more info.
 
 ## Seamless transition
 You can use your existing certificates and keys with `letsgetacert`, just create a symbolic link in the `CERT_DIR`. The name should follow this pattern: `$CN.fullchain.pem`. Then the file will be picked up by `letsgetacert` automatically and if the certificate is going to expire soon it will be renewed using Certbot.
