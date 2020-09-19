@@ -20,3 +20,9 @@ function hook {
 	echo Reload your web server configuration
 	# Example: sudo service nginx reload
 }
+
+# Call this before obtaining a certificate (before generating a key, before executing Certbot)
+function pre_getcert_hook {
+	echo Install certbot plugins
+	# Example: sudo -H /opt/eff.org/certbot/venv/bin/pip install certbot-dns-cloudflare
+}

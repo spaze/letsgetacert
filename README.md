@@ -55,6 +55,9 @@ SUBJECT_EMAIL=bot@example.com
 function hook {
     sudo service nginx reload
 }
+function pre_getcert_hook {
+    sudo -H /opt/eff.org/certbot/venv/bin/pip install certbot-dns-cloudflare
+}
 ```
 
 ### Options with example values
@@ -98,6 +101,13 @@ Call this function when at least one cert was generated successfully or not; use
 - `$FAILED_CERTS_CNEXT`: array of common names (plus *filename extensions*) from certificates which were not generated due to a failure
 - `$FAILED_CERTS_CN`: array of just the common names
 - `$FAILED_CERTS_EXT`: array of just the *file extensions*
+
+```
+function pre_getcert_hook {
+    sudo -H /opt/eff.org/certbot/venv/bin/pip install certbot-dns-cloudflare
+}
+```
+This function is called before obtaining a certificate (i.e. before generating a key & CSR, and before executing Certbot). You can use it to reinstall plugins when using `certbot-auto` which wipes all plugins on upgrade. It will not be called when no certificate is to be obtained (for example because none is expiring soon).
 
 #### Hook example
 This (bit more complicated) hook example will reload nginx configuration when at least one certificate was generated successfully, and `POST` a report together with a `user` and a `key` to the specified URL:

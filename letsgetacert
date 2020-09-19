@@ -53,6 +53,10 @@ function hook {
 	: # To be redefined in the config file
 }
 
+function pre_getcert_hook {
+	: # To be redefined in the config file
+}
+
 function loadconf {
 	if [ ! -f $CONF ]; then
 		echo "Config file $CONF not found"
@@ -185,6 +189,7 @@ function checkexpiry {
 	if [ "$GETCERT" = true ]; then
 		verbose "[$CN$EXT] Getting certificate"
 		if [ "$NO_CERT" != true ]; then
+			pre_getcert_hook
 			getcert
 			CALLHOOK=true
 		else
