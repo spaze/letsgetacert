@@ -135,7 +135,7 @@ function getcert {
 
 	# Generate CSR
 	# Key is owned by root
-	sudo openssl req -new -config $OPENSSL_CNF_TEMP -key $PRIVKEY -out $CSR_TEMP -outform der -subj "$SUBJECT" -reqexts alt_names
+	sudo openssl req -new -config $OPENSSL_CNF_TEMP -key $PRIVKEY -outform der -subj "$SUBJECT" -reqexts alt_names > $CSR_TEMP
 
 	# Get the certificate
 	verbose "[$CN$EXT] Calling Certbot $CERTBOT with $CERTBOT_EXTRA_OPTS"
