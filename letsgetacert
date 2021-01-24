@@ -115,8 +115,8 @@ function getcert {
 	verbose "[$CN$EXT] subject: $SUBJECT"
 	verbose "[$CN$EXT] alt_names: $ALT_NAMES"
 
-	OPENSSL_CNF_TEMP=$(mktemp)
-	CSR_TEMP=$(mktemp)
+	OPENSSL_CNF_TEMP=$(mktemp --tmpdir tmp.$(basename $0)-cnf.XXXXXXXXXX)
+	CSR_TEMP=$(mktemp --tmpdir tmp.$(basename $0)-csr.XXXXXXXXXX)
 	trap "rm -f $OPENSSL_CNF_TEMP $CSR_TEMP" INT TERM HUP EXIT
 
 	# Generate OpenSSL config file
