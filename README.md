@@ -1,5 +1,5 @@
 # Let's Get a Cert
-A [Certbot](https://certbot.eff.org/) wrapper to process certificate configuration files and to generate certificates if needed. Uses pre-generated private key to generate CSR, the key is not overwritten so you can use HTTP Public Key Pinning (HPKP) with your website.
+A [Certbot](https://certbot.eff.org/) wrapper to process certificate configuration files and to generate certificates if needed. Can execute a "hook" after it has finished.
 
 # Prerequisites
 1. [Certbot](https://certbot.eff.org/) installed and registered with the CA (`certbot-auto register`)
