@@ -155,7 +155,7 @@ Certificate common name.
 ```
 PRIVKEY=/etc/nginx/certs/$CN.privkey.pem
 ```
-Path to private key, must exist before generating certs. Cannot be used together with `PRIVKEY_CMD`.
+Path to private key, must exist before generating certs. Cannot be used together with `PRIVKEY_CMD`. Can be used to emulate or instead of Certbot's `--reuse-key` (available since 0.25.0).
 
 ```
 PRIVKEY_CMD="genrsa -out %s 2048"
