@@ -47,7 +47,7 @@ Be verbose and report what's going on.
 ## Configuration file options
 ### Example file
 ```
-EXPIRY_THRESHOLD=5
+EXPIRY_THRESHOLD=30
 CONFDIR=/home/ubuntu/.letsgetacert
 CERTBOT=/opt/certbot/certbot-auto
 CERTBOT_EXTRA_OPTS="--test-cert --quiet"
@@ -62,7 +62,7 @@ function pre_getcert_hook {
 
 ### Options with example values
 ```
-EXPIRY_THRESHOLD=5
+EXPIRY_THRESHOLD=30
 ```
 Renew certs this many days before the expiration date.
 
