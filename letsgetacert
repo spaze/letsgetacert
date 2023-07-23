@@ -1,15 +1,15 @@
 #!/bin/bash
 
 function verbose {
-	[ "$VERBOSE" = true ] && echo $1
+	[ "$VERBOSE" = true ] && echo "$1"
 }
 
 function usage {
-	echo "Usage `basename $0` [-c|--config CONFIGFILE] [-e|--list-expires] [-f|--force COMMONNAME] [-n|--no-cert] [-v|--verbose]"
+	echo "Usage $(basename "$0") [-c|--config CONFIGFILE] [-e|--list-expires] [-f|--force COMMONNAME] [-n|--no-cert] [-v|--verbose]"
 }
 
 function parseopts {
-	CONF=`dirname $0`/`basename $0`.cnf
+	CONF=$(dirname "$0")/$(basename "$0").cnf
 	while [ $# -gt 0 ]; do
 		KEY="$1"
 		case $KEY in
@@ -58,12 +58,13 @@ function pre_getcert_hook {
 }
 
 function loadconf {
-	if [ ! -f $CONF ]; then
+	if [ ! -f "$CONF" ]; then
 		echo "Config file $CONF not found"
 		exit 2
 	fi
 
-	source $CONF
+	# shellcheck disable=SC1090
+	source "$CONF"
 
 	if [ -z "$EXPIRY_THRESHOLD" ]; then
 		echo "EXPIRY_THRESHOLD not defined in $CONF"
@@ -97,15 +98,15 @@ function getcert {
 		COMMAND="$COMMAND ${CERTBOT_DNS_CHALLENGE_OPTS}"
 	fi
 
-	IFS=';' read -a LINES <<<"$DOMAINS"
+	IFS=';' read -r -a LINES <<<"$DOMAINS"
 	for LINE in "${LINES[@]}"; do
-		IFS='=' read -a ITEMS <<<"$LINE"
+		IFS='=' read -r -a ITEMS <<<"$LINE"
 
 		if [ $CHALLENGE = "http-01" ]; then
 			COMMAND="$COMMAND --webroot-path $WEBROOT_DIR/${ITEMS[0]}"
 		fi
 
-		IFS=',' read -a DOMAINS <<<"${ITEMS[1]}"
+		IFS=',' read -r -a DOMAINS <<<"${ITEMS[1]}"
 		for DOMAIN in "${DOMAINS[@]}"; do
 			COMMAND="$COMMAND --domain $DOMAIN"
 			ALT_NAMES="${ALT_NAMES},DNS:$DOMAIN"
@@ -115,39 +116,40 @@ function getcert {
 	verbose "[$CN$EXT] subject: $SUBJECT"
 	verbose "[$CN$EXT] alt_names: $ALT_NAMES"
 
-	CSR_TEMP=$(mktemp --tmpdir tmp.$(basename $0)-csr.XXXXXXXXXX)
-	trap "rm -f $CSR_TEMP" INT TERM HUP EXIT
+	CSR_TEMP=$(mktemp --tmpdir "tmp.$(basename "$0")-csr.XXXXXXXXXX")
+	trap 'rm -f $CSR_TEMP' INT TERM HUP EXIT
 
 	# Generate key, possibly
 	if [ -n "$PRIVKEY_CMD" ]; then
 		PRIVKEY=$CERT_DIR/archive/$CN-$NOW.privkey$EXT.pem
 		PRIVKEY_LIVE=$CERT_DIR/$CN.privkey$EXT.pem
-		printf -v PRIVKEY_CMD "$PRIVKEY_CMD" $PRIVKEY
+		printf -v PRIVKEY_CMD '%s %s' "$PRIVKEY_CMD" "$PRIVKEY"
 		verbose "[$CN$EXT] Generating key: $PRIVKEY_CMD"
-		sudo openssl $PRIVKEY_CMD
+		sudo openssl "$PRIVKEY_CMD"
 	fi
 
 	# Generate CSR
 	# Key is owned by root
-	sudo openssl req -new -addext "subjectAltName = $ALT_NAMES" -key $PRIVKEY -outform der -subj "$SUBJECT" > $CSR_TEMP
+	# shellcheck disable=SC2024
+	sudo openssl req -new -addext "subjectAltName = $ALT_NAMES" -key "$PRIVKEY" -outform der -subj "$SUBJECT" > "$CSR_TEMP"
 
 	# Get the certificate
 	verbose "[$CN$EXT] Calling Certbot $CERTBOT with $CERTBOT_EXTRA_OPTS"
-	$CERTBOT certonly $CERTBOT_EXTRA_OPTS --csr $CSR_TEMP --cert-path $CERT --chain-path $CHAIN --fullchain-path $FULLCHAIN $COMMAND
+	$CERTBOT certonly "$CERTBOT_EXTRA_OPTS" --csr "$CSR_TEMP" --cert-path "$CERT" --chain-path "$CHAIN" --fullchain-path "$FULLCHAIN" "$COMMAND"
 
-	if sudo [ -f $FULLCHAIN ]; then
+	if sudo [ -f "$FULLCHAIN" ]; then
 		verbose "[$CN$EXT] Certificate generated $FULLCHAIN_LIVE -> $FULLCHAIN"
-		sudo ln --symbolic --force $FULLCHAIN $FULLCHAIN_LIVE
+		sudo ln --symbolic --force "$FULLCHAIN" "$FULLCHAIN_LIVE"
 		if [ -n "$PRIVKEY_LIVE" ]; then
 			verbose "[$CN$EXT] Key generated $PRIVKEY_LIVE -> $PRIVKEY"
-			sudo ln --symbolic --force $PRIVKEY $PRIVKEY_LIVE
+			sudo ln --symbolic --force "$PRIVKEY" "$PRIVKEY_LIVE"
 		fi
 
 		NEW_CERTS_CNEXT+=("$CN$EXT")
 		NEW_CERTS_CN+=("$CN")
 		NEW_CERTS_EXT+=("$RAW_EXT")
-		NEW_CERTS_START+=("$(date --date "$(getstart $FULLCHAIN_LIVE)" +%s)")
-		NEW_CERTS_EXPIRY+=("$(date --date "$(getexpiry $FULLCHAIN_LIVE)" +%s)")
+		NEW_CERTS_START+=("$(date --date "$(getstart "$FULLCHAIN_LIVE")" +%s)")
+		NEW_CERTS_EXPIRY+=("$(date --date "$(getexpiry "$FULLCHAIN_LIVE")" +%s)")
 	else
 		verbose "[$CN$EXT] Certificate NOT generated $FULLCHAIN"
 		FAILED_CERTS_CNEXT+=("$CN$EXT")
@@ -157,20 +159,20 @@ function getcert {
 }
 
 function getexpiry {
-	sudo openssl x509 -in $1 -noout -enddate | sed -n "s/notAfter=//p"
+	sudo openssl x509 -in "$1" -noout -enddate | sed -n "s/notAfter=//p"
 }
 
 function getstart {
-	sudo openssl x509 -in $1 -noout -startdate | sed -n "s/notBefore=//p"
+	sudo openssl x509 -in "$1" -noout -startdate | sed -n "s/notBefore=//p"
 }
 
 function checkexpiry {
 	GETCERT=true
 	# Certs are owned by root
-	if [ "$FORCE" != $CN ] && sudo [ -f $FULLCHAIN_LIVE ]; then
-		EXPIRY_DATE=`getexpiry $FULLCHAIN_LIVE`
+	if [ "$FORCE" != "$CN" ] && sudo [ -f "$FULLCHAIN_LIVE" ]; then
+		EXPIRY_DATE=$(getexpiry "$FULLCHAIN_LIVE")
 		verbose "[$CN$EXT] $FULLCHAIN_LIVE already exists and expires $EXPIRY_DATE"
-		if [ `expr $NOW_EPOCH + $EXPIRY_THRESHOLD \* 24 \* 60 \* 60` -ge `date --date "$EXPIRY_DATE" +%s` ]; then
+		if [ $(("$NOW_EPOCH" + "$EXPIRY_THRESHOLD" * 24 * 60 * 60)) -ge "$(date --date "$EXPIRY_DATE" +%s)" ]; then
 			verbose "[$CN$EXT] Certificate expired or expires soon, will be renewed"
 			GETCERT=true
 		else
@@ -198,16 +200,16 @@ function processconf {
 	NEW_CERTS_EXT=()
 	NEW_CERTS_START=()
 	NEW_CERTS_EXPIRY=()
-	NEW_CERTS_FULLCHAIN=()
 	FAILED_CERTS_CNEXT=()
 	FAILED_CERTS_CN=()
 	FAILED_CERTS_EXT=()
-	for CONF_FILE in `find $CONFDIR -name \*.cnf | sort`; do
+	for CONF_FILE in $(find "$CONFDIR" -name \*.cnf | sort); do
 		EXT=""
 		RAW_EXT=""
 		CHALLENGE="http-01"
 		unset PRIVKEY PRIVKEY_CMD
-		source $CONF_FILE
+		# shellcheck disable=SC1090
+		source "$CONF_FILE"
 		if [ -n "$PRIVKEY" ] && [ -n "$PRIVKEY_CMD" ]; then
 			echo "Cannot use both PRIVKEY and PRIVKEY_CMD in $CONF_FILE"
 			exit 2
@@ -216,13 +218,13 @@ function processconf {
 			RAW_EXT=$EXT
 			EXT="-$EXT"
 		fi
-		NOW=`date --utc +%Y%m%d%H%M%S`
-		NOW_EPOCH=`date +%s`
+		NOW=$(date --utc +%Y%m%d%H%M%S)
+		NOW_EPOCH=$(date +%s)
 		verbose "[$CN$EXT] Starting at $NOW"
 
-		if sudo [ ! -d $CERT_DIR/archive ]; then
+		if sudo [ ! -d "$CERT_DIR"/archive ]; then
 			verbose "[$CN$EXT] Creating directory $CERT_DIR/archive"
-			sudo mkdir -p $CERT_DIR/archive
+			sudo mkdir -p "$CERT_DIR"/archive
 		fi
 
 		CERT=$CERT_DIR/archive/$CN-$NOW.cert$EXT.pem
@@ -230,12 +232,12 @@ function processconf {
 		FULLCHAIN=$CERT_DIR/archive/$CN-$NOW.fullchain$EXT.pem
 		FULLCHAIN_LIVE=$CERT_DIR/$CN.fullchain$EXT.pem
 		if [ "$LIST_EXPIRES" = true ]; then
-			if sudo [ -f $FULLCHAIN_LIVE ]; then
-				EXPIRY_DATE=`getexpiry $FULLCHAIN_LIVE`
-				DAYS_LEFT=`expr \( $(date -d "$EXPIRY_DATE" +%s) - $NOW_EPOCH \) / 24 / 60 / 60`
-				if [ $DAYS_LEFT -le 0 ]; then
+			if sudo [ -f "$FULLCHAIN_LIVE" ]; then
+				EXPIRY_DATE=$(getexpiry "$FULLCHAIN_LIVE")
+				DAYS_LEFT=$((("$(date -d "$EXPIRY_DATE" +%s)" - "$NOW_EPOCH") / 24 / 60 / 60))
+				if [ "$DAYS_LEFT" -le 0 ]; then
 					MESSAGE=EXPIRED
-				elif [ $DAYS_LEFT = 1 ]; then
+				elif [ "$DAYS_LEFT" = 1 ]; then
 					MESSAGE="$DAYS_LEFT DAY"
 				else
 					MESSAGE="$DAYS_LEFT DAYS"
@@ -259,13 +261,13 @@ function callhook {
 }
 
 OPENSSL_VERSION=$(openssl version)
-if echo $OPENSSL_VERSION | awk '$2 !~ /(^0\.)|(^1\.(0\.|1\.0))/ { exit 1 }'; then
+if echo "$OPENSSL_VERSION" | awk '$2 !~ /(^0\.)|(^1\.(0\.|1\.0))/ { exit 1 }'; then
 	echo "OpenSSL 1.1.1 or newer is required, yours is $OPENSSL_VERSION"
 	usage
 	exit 4
 fi
 
-parseopts $@
+parseopts "$@"
 loadconf
 processconf
 callhook
