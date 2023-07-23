@@ -130,6 +130,7 @@ function getcert {
 
 	# Generate CSR
 	# Key is owned by root
+	# shellcheck disable=SC2024
 	sudo openssl req -new -addext "subjectAltName = $ALT_NAMES" -key "$PRIVKEY" -outform der -subj "$SUBJECT" > "$CSR_TEMP"
 
 	# Get the certificate
