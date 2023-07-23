@@ -115,14 +115,8 @@ function getcert {
 	verbose "[$CN$EXT] subject: $SUBJECT"
 	verbose "[$CN$EXT] alt_names: $ALT_NAMES"
 
-	OPENSSL_CNF_TEMP=$(mktemp --tmpdir tmp.$(basename $0)-cnf.XXXXXXXXXX)
 	CSR_TEMP=$(mktemp --tmpdir tmp.$(basename $0)-csr.XXXXXXXXXX)
-	trap "rm -f $OPENSSL_CNF_TEMP $CSR_TEMP" INT TERM HUP EXIT
-
-	# Generate OpenSSL config file
-	cat /etc/ssl/openssl.cnf > $OPENSSL_CNF_TEMP
-	echo '[ alt_names ]' >> $OPENSSL_CNF_TEMP
-	echo "subjectAltName = $ALT_NAMES" >> $OPENSSL_CNF_TEMP
+	trap "rm -f $CSR_TEMP" INT TERM HUP EXIT
 
 	# Generate key, possibly
 	if [ -n "$PRIVKEY_CMD" ]; then
@@ -135,7 +129,7 @@ function getcert {
 
 	# Generate CSR
 	# Key is owned by root
-	sudo openssl req -new -config $OPENSSL_CNF_TEMP -key $PRIVKEY -outform der -subj "$SUBJECT" -reqexts alt_names > $CSR_TEMP
+	sudo openssl req -new -addext "subjectAltName = $ALT_NAMES" -key $PRIVKEY -outform der -subj "$SUBJECT" > $CSR_TEMP
 
 	# Get the certificate
 	verbose "[$CN$EXT] Calling Certbot $CERTBOT with $CERTBOT_EXTRA_OPTS"
@@ -263,6 +257,13 @@ function callhook {
 		hook
 	fi
 }
+
+OPENSSL_VERSION=$(openssl version)
+if echo $OPENSSL_VERSION | awk '$2 !~ /(^0\.)|(^1\.(0\.|1\.0))/ { exit 1 }'; then
+	echo "OpenSSL 1.1.1 or newer is required, yours is $OPENSSL_VERSION"
+	usage
+	exit 4
+fi
 
 parseopts $@
 loadconf
