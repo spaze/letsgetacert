@@ -116,7 +116,7 @@ function getcert {
 	verbose "[$CN$EXT] alt_names: $ALT_NAMES"
 
 	CSR_TEMP=$(mktemp --tmpdir "tmp.$(basename "$0")-csr.XXXXXXXXXX")
-	trap "rm -f $CSR_TEMP" INT TERM HUP EXIT
+	trap 'rm -f $CSR_TEMP' INT TERM HUP EXIT
 
 	# Generate key, possibly
 	if [ -n "$PRIVKEY_CMD" ]; then
