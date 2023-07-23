@@ -258,6 +258,13 @@ function callhook {
 	fi
 }
 
+OPENSSL_VERSION=$(openssl version)
+if echo $OPENSSL_VERSION | awk '$2 !~ /(^0\.)|(^1\.(0\.|1\.0))/ { exit 1 }'; then
+	echo "OpenSSL 1.1.1 or newer is required, yours is $OPENSSL_VERSION"
+	usage
+	exit 4
+fi
+
 parseopts $@
 loadconf
 processconf

@@ -4,6 +4,7 @@ A [Certbot](https://certbot.eff.org/) wrapper to process certificate configurati
 # Prerequisites
 1. [Certbot](https://certbot.eff.org/) installed and registered with the CA (`certbot-auto register`)
 2. A webserver with HTTPS support enabled, make sure `.well-known` directory in the document root is accessible and the URLs are not rewritten
+3. OpenSSL 1.1.1 or newer
 
 # Installation
 1. Clone this repository somewhere
