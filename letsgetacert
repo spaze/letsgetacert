@@ -115,7 +115,7 @@ function getcert {
 	verbose "[$CN$EXT] subject: $SUBJECT"
 	verbose "[$CN$EXT] alt_names: $ALT_NAMES"
 
-	CSR_TEMP=$(mktemp --tmpdir tmp.$(basename "$0")-csr.XXXXXXXXXX)
+	CSR_TEMP=$(mktemp --tmpdir "tmp.$(basename "$0")-csr.XXXXXXXXXX")
 	trap "rm -f $CSR_TEMP" INT TERM HUP EXIT
 
 	# Generate key, possibly
@@ -170,7 +170,7 @@ function checkexpiry {
 	if [ "$FORCE" != "$CN" ] && sudo [ -f "$FULLCHAIN_LIVE" ]; then
 		EXPIRY_DATE=$(getexpiry "$FULLCHAIN_LIVE")
 		verbose "[$CN$EXT] $FULLCHAIN_LIVE already exists and expires $EXPIRY_DATE"
-		if [ $(expr "$NOW_EPOCH" + "$EXPIRY_THRESHOLD" \* 24 \* 60 \* 60) -ge $(date --date "$EXPIRY_DATE" +%s) ]; then
+		if [ "$(expr "$NOW_EPOCH" + "$EXPIRY_THRESHOLD" \* 24 \* 60 \* 60)" -ge "$(date --date "$EXPIRY_DATE" +%s)" ]; then
 			verbose "[$CN$EXT] Certificate expired or expires soon, will be renewed"
 			GETCERT=true
 		else
@@ -232,7 +232,7 @@ function processconf {
 		if [ "$LIST_EXPIRES" = true ]; then
 			if sudo [ -f "$FULLCHAIN_LIVE" ]; then
 				EXPIRY_DATE=$(getexpiry "$FULLCHAIN_LIVE")
-				DAYS_LEFT=$(expr \( $(date -d "$EXPIRY_DATE" +%s) - "$NOW_EPOCH" \) / 24 / 60 / 60)
+				DAYS_LEFT=$(expr \( "$(date -d "$EXPIRY_DATE" +%s)" - "$NOW_EPOCH" \) / 24 / 60 / 60)
 				if [ "$DAYS_LEFT" -le 0 ]; then
 					MESSAGE=EXPIRED
 				elif [ "$DAYS_LEFT" = 1 ]; then
