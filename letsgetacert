@@ -63,6 +63,7 @@ function loadconf {
 		exit 2
 	fi
 
+	# shellcheck disable=SC1090
 	source "$CONF"
 
 	if [ -z "$EXPIRY_THRESHOLD" ]; then
@@ -206,6 +207,7 @@ function processconf {
 		RAW_EXT=""
 		CHALLENGE="http-01"
 		unset PRIVKEY PRIVKEY_CMD
+		# shellcheck disable=SC1090
 		source "$CONF_FILE"
 		if [ -n "$PRIVKEY" ] && [ -n "$PRIVKEY_CMD" ]; then
 			echo "Cannot use both PRIVKEY and PRIVKEY_CMD in $CONF_FILE"
