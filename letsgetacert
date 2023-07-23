@@ -97,15 +97,15 @@ function getcert {
 		COMMAND="$COMMAND ${CERTBOT_DNS_CHALLENGE_OPTS}"
 	fi
 
-	IFS=';' read -a LINES <<<"$DOMAINS"
+	IFS=';' read -r -a LINES <<<"$DOMAINS"
 	for LINE in "${LINES[@]}"; do
-		IFS='=' read -a ITEMS <<<"$LINE"
+		IFS='=' read -r -a ITEMS <<<"$LINE"
 
 		if [ $CHALLENGE = "http-01" ]; then
 			COMMAND="$COMMAND --webroot-path $WEBROOT_DIR/${ITEMS[0]}"
 		fi
 
-		IFS=',' read -a DOMAINS <<<"${ITEMS[1]}"
+		IFS=',' read -r -a DOMAINS <<<"${ITEMS[1]}"
 		for DOMAIN in "${DOMAINS[@]}"; do
 			COMMAND="$COMMAND --domain $DOMAIN"
 			ALT_NAMES="${ALT_NAMES},DNS:$DOMAIN"
