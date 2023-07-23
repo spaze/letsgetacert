@@ -5,11 +5,11 @@ function verbose {
 }
 
 function usage {
-	echo "Usage `basename "$0"` [-c|--config CONFIGFILE] [-e|--list-expires] [-f|--force COMMONNAME] [-n|--no-cert] [-v|--verbose]"
+	echo "Usage $(basename "$0") [-c|--config CONFIGFILE] [-e|--list-expires] [-f|--force COMMONNAME] [-n|--no-cert] [-v|--verbose]"
 }
 
 function parseopts {
-	CONF=`dirname "$0"`/`basename "$0"`.cnf
+	CONF=$(dirname "$0")/$(basename "$0").cnf
 	while [ $# -gt 0 ]; do
 		KEY="$1"
 		case $KEY in
@@ -168,9 +168,9 @@ function checkexpiry {
 	GETCERT=true
 	# Certs are owned by root
 	if [ "$FORCE" != "$CN" ] && sudo [ -f "$FULLCHAIN_LIVE" ]; then
-		EXPIRY_DATE=`getexpiry "$FULLCHAIN_LIVE"`
+		EXPIRY_DATE=$(getexpiry "$FULLCHAIN_LIVE")
 		verbose "[$CN$EXT] $FULLCHAIN_LIVE already exists and expires $EXPIRY_DATE"
-		if [ `expr "$NOW_EPOCH" + "$EXPIRY_THRESHOLD" \* 24 \* 60 \* 60` -ge `date --date "$EXPIRY_DATE" +%s` ]; then
+		if [ $(expr "$NOW_EPOCH" + "$EXPIRY_THRESHOLD" \* 24 \* 60 \* 60) -ge $(date --date "$EXPIRY_DATE" +%s) ]; then
 			verbose "[$CN$EXT] Certificate expired or expires soon, will be renewed"
 			GETCERT=true
 		else
@@ -202,7 +202,7 @@ function processconf {
 	FAILED_CERTS_CNEXT=()
 	FAILED_CERTS_CN=()
 	FAILED_CERTS_EXT=()
-	for CONF_FILE in `find "$CONFDIR" -name \*.cnf | sort`; do
+	for CONF_FILE in $(find "$CONFDIR" -name \*.cnf | sort); do
 		EXT=""
 		RAW_EXT=""
 		CHALLENGE="http-01"
@@ -216,8 +216,8 @@ function processconf {
 			RAW_EXT=$EXT
 			EXT="-$EXT"
 		fi
-		NOW=`date --utc +%Y%m%d%H%M%S`
-		NOW_EPOCH=`date +%s`
+		NOW=$(date --utc +%Y%m%d%H%M%S)
+		NOW_EPOCH=$(date +%s)
 		verbose "[$CN$EXT] Starting at $NOW"
 
 		if sudo [ ! -d "$CERT_DIR"/archive ]; then
@@ -231,8 +231,8 @@ function processconf {
 		FULLCHAIN_LIVE=$CERT_DIR/$CN.fullchain$EXT.pem
 		if [ "$LIST_EXPIRES" = true ]; then
 			if sudo [ -f "$FULLCHAIN_LIVE" ]; then
-				EXPIRY_DATE=`getexpiry "$FULLCHAIN_LIVE"`
-				DAYS_LEFT=`expr \( $(date -d "$EXPIRY_DATE" +%s) - "$NOW_EPOCH" \) / 24 / 60 / 60`
+				EXPIRY_DATE=$(getexpiry "$FULLCHAIN_LIVE")
+				DAYS_LEFT=$(expr \( $(date -d "$EXPIRY_DATE" +%s) - "$NOW_EPOCH" \) / 24 / 60 / 60)
 				if [ "$DAYS_LEFT" -le 0 ]; then
 					MESSAGE=EXPIRED
 				elif [ "$DAYS_LEFT" = 1 ]; then
