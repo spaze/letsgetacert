@@ -264,7 +264,7 @@ if echo "$OPENSSL_VERSION" | awk '$2 !~ /(^0\.)|(^1\.(0\.|1\.0))/ { exit 1 }'; t
 	exit 4
 fi
 
-parseopts $@
+parseopts "$@"
 loadconf
 processconf
 callhook
