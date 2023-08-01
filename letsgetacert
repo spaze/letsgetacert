@@ -126,7 +126,8 @@ function getcert {
 		# shellcheck disable=2059
 		printf -v PRIVKEY_CMD "$PRIVKEY_CMD" "$PRIVKEY"
 		verbose "[$CN$EXT] Generating key: $PRIVKEY_CMD"
-		sudo openssl "$PRIVKEY_CMD"
+		# shellcheck disable=2086
+		sudo openssl $PRIVKEY_CMD
 	fi
 
 	# Generate CSR
