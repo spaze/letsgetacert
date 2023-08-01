@@ -137,7 +137,8 @@ function getcert {
 
 	# Get the certificate
 	verbose "[$CN$EXT] Calling Certbot $CERTBOT with $CERTBOT_EXTRA_OPTS"
-	$CERTBOT certonly "$CERTBOT_EXTRA_OPTS" --csr "$CSR_TEMP" --cert-path "$CERT" --chain-path "$CHAIN" --fullchain-path "$FULLCHAIN" "$COMMAND"
+	# shellcheck disable=SC2086
+	$CERTBOT certonly $CERTBOT_EXTRA_OPTS --csr "$CSR_TEMP" --cert-path "$CERT" --chain-path "$CHAIN" --fullchain-path "$FULLCHAIN" $COMMAND
 
 	if sudo [ -f "$FULLCHAIN" ]; then
 		verbose "[$CN$EXT] Certificate generated $FULLCHAIN_LIVE -> $FULLCHAIN"
