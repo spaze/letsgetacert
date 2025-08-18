@@ -1,6 +1,9 @@
 # Let's Get a Cert
 A [Certbot](https://certbot.eff.org/) wrapper to process certificate configuration files and to generate certificates if needed. Can execute a "hook" after it has finished.
 
+# DEPRECATED
+I have deprecated this tool in favor of full Certbot management. One of the main features I was using this tool for was the hook function, which can be replaced with a much simpler Certbot hook. See my [deploy hook script](https://github.com/spaze/certmonitor-certbot-deploy-hook) for an example.
+
 # Prerequisites
 1. [Certbot](https://certbot.eff.org/) installed and registered with the CA (`certbot-auto register`)
 2. A webserver with HTTPS support enabled, make sure `.well-known` directory in the document root is accessible and the URLs are not rewritten
